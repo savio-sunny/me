@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEY</title>
+    <style>
+        :root {
+            --gold: #d4af37;
+            --gold-glow: rgba(212, 175, 55, 0.4);
+            /* Deep Smoked Black Glass Effect */
+            --glass-bg: rgba(10, 10, 10, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --glass-shine: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            perspective: 2500px;
+            font-family: 'Times New Roman', serif;
+            cursor: grab;
+        }
+
+        body:active {
+            cursor: grabbing;
+        }
+
+        /* Dark ambient background to emphasize the smoked glass */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 30% 20%, #111 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, #0a0a0a 0%, #000 100%);
+            z-index: -1;
+        }
+
+        /* Particle Canvas Styling */
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .scene {
+            width: 90vw;
+            max-width: 600px;
+            height: 320px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
+            z-index: 10;
+        }
+
+        .card-wrapper {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            will-change: transform;
+        }
+
+        /* Front and Back common styles */
+        .card-face {
+            position: absolute;
+            inset: 0;
+            background: var(--glass-bg);
+            /* Heavier blur for the "smoked" appearance */
+            backdrop-filter: blur(40px) brightness(0.5);
+            -webkit-backdrop-filter: blur(40px) brightness(0.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backface-visibility: hidden;
+            /* Premium dark plate shadow */
+            box-shadow: 
+                0 0 50px rgba(0,0,0,1),
+                inset 0 0 15px rgba(255,255,255,0.05);
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+        }
+
+        /* Animated gold edge light for the plate */
+        .edge-glow {
+            position: absolute;
+            inset: 0;
+            border-radius: 15px;
+            padding: 1.5px;
+            background: linear-gradient(135deg, transparent, var(--gold), transparent, rgba(255,255,255,0.4), transparent);
+            background-size: 300% 300%;
+            -webkit-mask: 
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            mask: 
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0.6;
+            animation: moveGlow 8s infinite linear;
+        }
+
+        @keyframes moveGlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .glare {
+            position: absolute;
+            inset: -100%;
+            background: radial-gradient(circle at center, var(--glass-shine) 0%, transparent 60%);
+            pointer-events: none;
+            mix-blend-mode: screen;
+        }
+
+        .content {
+            transform: translateZ(90px); /* Deeper text projection */
+            text-align: center;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .name {
+            font-size: clamp(0.9rem, 4.5vw, 1.5rem); /* Slightly smaller for elegance */
+            color: #fff;
+            letter-spacing: 05px;
+            text-transform: uppercase;
+            font-weight: 200;
+            white-space: nowrap;
+            margin-bottom: 25px;
+            text-shadow: 0 5px 20px rgba(0,0,0,0.8);
+            text-align: center;
+            width: 100%;
+            margin-left: 7px; /* Compensating for the letter-spacing to ensure absolute center */
+        }
+
+        .back-text {
+            font-size: clamp(0.8rem, 3vw, 1.1rem);
+            color: rgba(255,255,255,0.8);
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            font-weight: 200;
+            margin-bottom: 15px;
+            transform: translateZ(50px);
+            text-align: center;
+            margin-left: 4px; /* Centering compensation */
+        }
+
+        .divider {
+            width: 50px;
+            height: 1px;
+            background: var(--gold);
+            box-shadow: 0 0 25px var(--gold-glow);
+        }
+
+        .quote-fixed {
+            position: fixed;
+            top: 20px;
+            color: #444;
+            font-size: 0.7rem;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            pointer-events: none;
+            text-align: center;
+            z-index: 20;
+        }
+
+        .copyright {
+            position: fixed;
+            top: 60px;
+            color: #444;
+            font-size: 0.5rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .instruction {
+            position: fixed;
+            top: 40px;
+            color: #444;
+            font-size: 0.6rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            z-index: 20;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="particleCanvas"></canvas>
+
+    <div class="instruction">- IT'S JUST A FORMAL STUFF -</div>
+    <div class="quote-fixed">HELLO!</div>
+    <div class="copyright">© 2026 Savio Sunny Jacob.</div>
+
+    <div class="scene">
+        <div class="card-wrapper" id="card">
+            <!-- Front Face: Smoked Black Glass -->
+            <div class="card-face card-front">
+                <div class="edge-glow"></div>
+                <div class="glare" id="glare"></div>
+                <div class="content">
+                    <h1 class="name">SAVIO SUNNY JACOB</h1>
+                    <div class="divider"></div>
+                </div>
+            </div>
+            
+            <!-- Back Face -->
+            <div class="card-face card-back">
+                <div class="edge-glow"></div>
+                <div class="content">
+                    <h2 class="back-text">PRETTY COOL RIGHT?</h2>
+                    <div class="divider" style="opacity: 0.4;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Particle System Logic
+        const pCanvas = document.getElementById('particleCanvas');
+        const pCtx = pCanvas.getContext('2d');
+        let particles = [];
+        const particleCount = 120;
+
+        function resizeCanvas() {
+            pCanvas.width = window.innerWidth;
+            pCanvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() {
+                this.init();
+            }
+            init() {
+                this.x = Math.random() * pCanvas.width;
+                this.y = Math.random() * pCanvas.height;
+                this.size = Math.random() * 2 + 0.5;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.alpha = Math.random() * 0.5 + 0.2;
+                this.flicker = Math.random() * 0.02;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.alpha += this.flicker;
+                if (this.alpha > 0.8 || this.alpha < 0.2) this.flicker *= -1;
+
+                if (this.x > pCanvas.width) this.x = 0;
+                if (this.x < 0) this.x = pCanvas.width;
+                if (this.y > pCanvas.height) this.y = 0;
+                if (this.y < 0) this.y = pCanvas.height;
+            }
+            draw() {
+                pCtx.beginPath();
+                pCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                pCtx.fillStyle = `rgba(212, 175, 55, ${this.alpha})`;
+                pCtx.shadowBlur = 5;
+                pCtx.shadowColor = '#d4af37';
+                pCtx.fill();
+            }
+        }
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+
+        function handleParticles() {
+            pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+        }
+
+        // Existing Card Logic
+        const card = document.getElementById('card');
+        const glare = document.getElementById('glare');
+        let isDragging = false;
+        let startX, startY;
+        let rotateX = 0;
+        let rotateY = 0;
+        let autoRotateY = 0;
+
+        const animate = () => {
+            handleParticles(); // Update background particles
+            
+            if (!isDragging) {
+                autoRotateY += 0.12;
+                card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY + autoRotateY}deg)`;
+            }
+            requestAnimationFrame(animate);
+        };
+        animate();
+
+        const startDragging = (e) => {
+            isDragging = true;
+            startX = e.pageX || (e.touches ? e.touches[0].pageX : 0);
+            startY = e.pageY || (e.touches ? e.touches[0].pageY : 0);
+            card.style.transition = 'none';
+        };
+
+        const dragging = (e) => {
+            if (!isDragging) return;
+            const x = e.pageX || (e.touches ? e.touches[0].pageX : 0);
+            const y = e.pageY || (e.touches ? e.touches[0].pageY : 0);
+            
+            const dx = x - startX;
+            const dy = y - startY;
+
+            rotateY += dx * 0.4;
+            rotateX -= dy * 0.4;
+
+            card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY + autoRotateY}deg)`;
+
+            // Glare reacts to the tilt of the black plate
+            glare.style.transform = `translateX(${rotateY * 0.3}px) translateY(${rotateX * 0.3}px)`;
+
+            startX = x;
+            startY = y;
+        };
+
+        const stopDragging = () => {
+            isDragging = false;
+            card.style.transition = 'transform 1.2s cubic-bezier(0.23, 1, 0.32, 1)';
+        };
+
+        window.addEventListener('mousedown', startDragging);
+        window.addEventListener('mousemove', dragging);
+        window.addEventListener('mouseup', stopDragging);
+        window.addEventListener('touchstart', startDragging);
+        window.addEventListener('touchmove', dragging, { passive: false });
+        window.addEventListener('touchend', stopDragging);
+    </script>
+</body>
+</html>
